@@ -122,14 +122,29 @@ if st.button("Predict") and input_df is not None:
         st.success("Prediction complete. See results below.")
         st.dataframe(results.head())
         # show a clearer message for first row
-        first_pred = preds[1]
-        first_proba = proba[1]
-        st.markdown("---")
-        st.subheader("First-row result")
-        if first_pred == 1:
-            st.success(f"APPROVED — Probability: {first_proba:.3f}")
-        else:
-            st.error(f"DENIED — Probability: {first_proba:.3f}")
+
+        ordinal_map = {
+            1: "first",
+            2: "second",
+            3: "third",
+            4: "fourth",
+            5: "fifth",
+            6: "sixth",
+            7: "seventh",
+            8: "eighth",
+            9: "ninth",
+            10: "tenth"
+        }
+
+        for idx in range(len(preds)):
+            first_pred = preds[idx]
+            first_proba = proba[idx]
+            st.markdown("---")
+            st.subheader(ordinal_map[idx+1] + " result")
+            if first_pred == 1:
+                st.success(f"APPROVED — Probability: {first_proba:.3f}")
+            else:
+                st.error(f"DENIED — Probability: {first_proba:.3f}")
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
