@@ -122,8 +122,8 @@ if st.button("Predict") and input_df is not None:
         st.success("Prediction complete. See results below.")
         st.dataframe(results.head())
         # show a clearer message for first row
-        first_pred = preds[0]
-        first_proba = proba[0]
+        first_pred = preds[1]
+        first_proba = proba[1]
         st.markdown("---")
         st.subheader("First-row result")
         if first_pred == 1:
