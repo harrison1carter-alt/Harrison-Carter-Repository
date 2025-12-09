@@ -101,53 +101,65 @@ if input_df is not None and feature_names is not None:
         st.warning(f"Missing columns (will be filled with 0): {missing[:20]}{('...' if len(missing)>20 else '')}")
     if extra:
         st.info(f"Extra columns in your input that will be ignored: {extra[:20]}{('...' if len(extra)>20 else '')}")
-
-# Predict button
+# --- PREDICT BUTTON ---
 if st.button("Predict") and input_df is not None:
     try:
-        # Ensure column order matches training
         if feature_names is not None:
             X = input_df.reindex(columns=feature_names, fill_value=0)
         else:
             X = input_df.copy()
 
-        # If model expects 1d numpy array, ensure shape
-        # Many scikit-learn models accept DataFrame directly.
+        # Compute predictions
         proba = model.predict_proba(X)[:, 1]
         preds = model.predict(X)
 
         results = X.copy()
         results["predicted_class"] = preds
         results["probability"] = proba
+
+        # Store in session_state so Submit button works
+        st.session_state["preds"] = preds
+        st.session_state["proba"] = proba
+        st.session_state["results"] = results
+
         st.success("Prediction complete. See results below.")
         st.dataframe(results.head())
-        # show a clearer message for first row
-    
-        # --- USER INDEX LOOKUP SECTION ---
-        st.markdown("### Look up a specific result by index")
-        
-        user_idx = st.number_input(
-            "Enter an index (0 to {}):".format(len(preds) - 1),
-            min_value=0,
-            max_value=len(preds) - 1,
-            step=1
-        )
-        
-        if st.button("Submit"):
-            st.markdown("---")
-            st.subheader(f"Result for index {user_idx}")
-        
-            selected_pred = preds[user_idx]
-            selected_proba = proba[user_idx]
-        
-            if selected_pred == 1:
-                st.success(f"APPROVED — Probability: {selected_proba:.3f}")
-            else:
-                st.error(f"DENIED — Probability: {selected_proba:.3f}")
-        
-            # Optional: show the row of feature values too
-            st.write("Feature values:")
-            st.dataframe(results.iloc[[user_idx]])
+
+    except Exception as e:
+        st.error(f"Prediction error: {e}")
+
+# --- SHOW LOOKUP SECTION IF WE HAVE PREDICTIONS ---
+if "preds" in st.session_state:
+
+    st.markdown("### Look up a specific result by index")
+
+    user_idx = st.number_input(
+        "Enter an index (0 to {}):".format(len(st.session_state["preds"]) - 1),
+        min_value=0,
+        max_value=len(st.session_state["preds"]) - 1,
+        step=1,
+        key="lookup_idx"
+    )
+
+    if st.button("Submit"):
+        preds = st.session_state["preds"]
+        proba = st.session_state["proba"]
+        results = st.session_state["results"]
+
+        st.markdown("---")
+        st.subheader(f"Result for index {user_idx}")
+
+        selected_pred = preds[user_idx]
+        selected_proba = proba[user_idx]
+
+        if selected_pred == 1:
+            st.success(f"APPROVED — Probability: {selected_proba:.3f}")
+        else:
+            st.error(f"DENIED — Probability: {selected_proba:.3f}")
+
+        st.write("Feature values:")
+        st.dataframe(results.iloc[[user_idx]])
+
 
 
     except Exception as e:
